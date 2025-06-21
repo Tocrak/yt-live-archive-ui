@@ -11,7 +11,7 @@
     <script>
         function getYoutubeID(url){
             if (!url.includes(".")) return url;
-            const regex = /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/;
+            const regex = /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=)|(?:\/watch\/))([^#\&\?]*).*/;
             return url.match(regex)[1];
         }
 
@@ -25,8 +25,12 @@
             if (localStorage.getItem("lang")){
                 changeLang();
             } else {
-                localStorage.setItem("lang", "zh_TW")
+                localStorage.setItem("lang", "en_US")
             }
+            if (!localStorage.getItem("binary")){
+                localStorage.setItem("binary", "ytdlp")
+            }
+            document.getElementById("binary").innerHTML = localStorage.getItem("binary");
 
             document.getElementById("go").addEventListener("click", async e => {
                 const url = document.getElementById("videoUrl").value;
@@ -34,6 +38,8 @@
 
                 const quality = document.getElementById("quality").value;
                 const params = getParams();
+                const binary = localStorage.getItem("binary");
+
                 const callbacks = document.getElementById("callbacks").disabled 
                     ? "" 
                     : [...document.querySelectorAll(".callback.item.selected")].map(x => x.id);
@@ -43,6 +49,7 @@
                         youtubeID: getYoutubeID(url),
                         quality,
                         params,
+                        binary,
                         callbacks
                     }),
                     headers: {
@@ -120,16 +127,25 @@
                 tds[0].textContent = k;
 
                 let status;
-                if (v) {
-                    if (v.status === 2) {
-                        status = statust.content.querySelector("td.negative")
-                    } else if (v.status === 3) {
-                        status = statust.content.querySelector("td.info.callback")
-                    } else {
+                switch (v.status) {
+                    case (1):
                         status = statust.content.querySelector("td.positive")
-                    }
-                } else {
-                    status = statust.content.querySelector("td.info.pending")
+                        break;
+                    case (2):
+                        status = statust.content.querySelector("td.negative")
+                        break;
+                    case (3):
+                        status = statust.content.querySelector("td.info.callback")
+                        break;
+                    case (4):
+                        status = statust.content.querySelector("td.warning")
+                        break;
+                    case (5):
+                        status = statust.content.querySelector("td.info.active")
+                        break;
+                    case (6):
+                        status = statust.content.querySelector("td.info.pending")
+                        break;
                 }
 
                 const clone = document.importNode(trt.content, true);
@@ -157,7 +173,7 @@
                         method: "DELETE"
                     }).then(() => statuses())
                 })
-                if (!v || v.status === 3) {
+                if (!v || v.status === 3 || v.status === 5 || v.status === 6) {
                     clear.querySelector("button").disabled = true;
                     clear.querySelector("button").classList.add("disabled")
                 }
@@ -254,6 +270,7 @@
             " error": " 發生錯誤",
             " caution": " 警告",
             " callback": " 後續處理中",
+            " active": " 积极的",
             "lang": "語言",
             "youtubeVideoURL": "YouTube 影片網址",
             "callback": "Callback",
@@ -263,7 +280,7 @@
         LANGS.en_US = {
             addMetadata: "Embed metadata",
             addThumbnail: "Embed thumbnail",
-            waitForLive: "Wait for Live",
+            waitForLive: "Wait for Live/From Start",
             outputFilename: "Output Filename",
             retryStream: "Secs for Retrying",
             threads: "Threads",
@@ -276,6 +293,7 @@
             " error": " ERROR",
             " caution": " CAUTION",
             " callback": " CALLBACK",
+            " active": " ACTIVE",
             "lang": "Language",
             "youtubeVideoURL": "YouTube Video URL",
             "callback": "Callback",
@@ -301,7 +319,15 @@
                     changeLang()
                 })
             }
+
+            for(const elem of document.getElementById("binaryMenu").childNodes){
+                elem.addEventListener("click", e => {
+                    localStorage.setItem("binary", e.target.id);
+                    document.getElementById("binary").innerHTML = e.target.id;
+                })
+            }
         })
+        
     </script>
     <style>
         .centerCell {
@@ -339,7 +365,7 @@
 <body>
     <div class="ts attached heading slate">
         <div class="ts narrow container">
-            <span class="header">YTArchive</span>
+            <span class="header">Youtube Livestream Archiver</span>
             <span class="description"></span>
         </div>
     </div>
@@ -349,11 +375,24 @@
             <i class="globe icon"></i>
             <span class="text" data-string="lang">語言</span>
             <div class="menu" id="langMenu">
+                <div class="item" id="en_US">
+                    English
+                </div>
                 <div class="item" id="zh_TW">
                     中文(台灣)
                 </div>
-                <div class="item" id="en_US">
-                    English
+            </div>
+        </div>
+
+        <div class="ts floating dropdown labeled icon button">
+            <i class="download icon"></i>
+            <span id="binary" class="text"></span>
+            <div class="menu" id="binaryMenu">
+                <div class="item" id="ytarchive">
+                    ytarchive
+                </div>
+                <div class="item" id="ytdlp">
+                    ytdlp
                 </div>
             </div>
         </div>
@@ -364,8 +403,7 @@
             <input id="videoUrl" type="text" placeholder="Youtube 影片網址" data-string="youtubeVideoURL" data-placeholder="true">
             <select class="ts basic dropdown" id="quality">
                 <option>best</option>
-                <option>1080p60</option>
-                <option>720p60</option>
+                <option>1080</option>
                 <option>720p</option>
                 <option>480p</option>
                 <option>360p</option>
@@ -397,8 +435,8 @@
                 </div>
                 <div class="three wide column">
                     <div class="ts toggle checkbox">
-                        <input type="checkbox" id="vp9" data-param="--vp9" class="param" checked>
-                        <label for="vp9">VP9</label>
+                        <input type="checkbox" id="mkv" data-param="--mkv" class="param" checked>
+                        <label for="mkv">MKV</label>
                     </div>
                 </div>
                 <div class="three wide column">
@@ -415,21 +453,21 @@
                 <div class="ts label" data-string="outputFilename">
                     輸出檔名
                 </div>
-                <input id="output" data-param2="--output" type="text" class="param" value="%(upload_date)s %(title)s (%(id)s)">
+                <input id="output" data-param2="--output" type="text" class="param" value="%(channel)s - %(title)s">
             </div>
             <br><br>
             <div class="ts small labeled input">
                 <div class="ts label" data-string="retryStream">
                     串流重試秒數
                 </div>
-                <input id="retryStream" data-param2="--retry-stream" type="number" class="param">
+                <input id="retryStream" data-param2="--retry-stream" type="number" class="param" value="60">
             </div>
             <br><br>
             <div class="ts small labeled input">
                 <div class="ts label" data-string="threads">
                     執行緒數量
                 </div>
-                <input id="threads" data-param2="--threads" type="number" class="param">
+                <input id="threads" data-param2="--threads" type="number" class="param" value="1">
             </div>
             <br>
             <div class="ts mini segmented selection items" id="callbacks">
@@ -458,7 +496,7 @@
             </dialog>
         </div>
         <br>
-        <table id="table" class="ts table centerTable">
+        <table id="table" class="ts table centerTable" style="margin-bottom: 25px;">
             <thead>
                 <tr class="">
                     <th class="collapsing" data-string="UID">UID</th>
@@ -471,6 +509,7 @@
             <template id="statusTemplate">
                 <td class="info callback" data-string=" callback"><i class="notched circle loading icon"></i> 後續處理中</td>
                 <td class="info pending" data-string=" pending"><i class="notched circle loading icon"></i> 處理中</td>
+                <td class="info active" data-string=" active"><i class="notched circle loading icon"></i> 积极的</td>
                 <td class="positive" data-string=" done"><i class="check icon"></i> 已完成</td>
                 <td class="negative" data-string=" error"><i class="remove icon"></i> 發生錯誤</td>
                 <td class="warning" data-string=" caution"><i class="caution icon"></i> 警告</td>

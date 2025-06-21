@@ -2,5 +2,5 @@
 
 :head
 echo Starting service...
-waitress-serve --port=30004 api:api
+waitress-serve --port=8099 api:api
 goto head

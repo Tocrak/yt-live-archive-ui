@@ -1,0 +1,4 @@
+falcon==4.0.2
+gunicorn==23.0.0
+packaging==24.2
+mutagen==1.47.0
