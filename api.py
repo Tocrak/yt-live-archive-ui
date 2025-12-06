@@ -263,6 +263,28 @@ def add_task(uid, process, task, binary, callback=False):
 
 class UpdateYTDLP:
     def on_post(self, req, resp):
+        for uid, data in statuses.items():
+            if data.get("binary") != "ytdlp":
+                continue
+
+            task = data.get("task")
+            if task and not task.ready():
+                resp.media = {
+                    "status": "error",
+                    "message": f"Cannot update yt-dlp: task '{uid}' is still running."
+                }
+                resp.status = falcon.HTTP_409
+                return
+
+            proc = data.get("process")
+            if proc and proc.poll() is None:
+                resp.media = {
+                    "status": "error",
+                    "message": f"Cannot update yt-dlp: process for '{uid}' is still running."
+                }
+                resp.status = falcon.HTTP_409
+                return
+
         try:
             get_ytdlp()
             resp.media = {"status": "success", "message": "yt-dlp updated successfully."}
