@@ -31,6 +31,7 @@
                 localStorage.setItem("binary", "ytdlp")
             }
             document.getElementById("binary").innerHTML = localStorage.getItem("binary");
+            toggleUpdateButton();
 
             document.getElementById("go").addEventListener("click", async e => {
                 const url = document.getElementById("videoUrl").value;
@@ -58,6 +59,23 @@
                     method: "POST"
                 }).then(() => statuses())
             })
+
+            document.getElementById("updateYTDLP").addEventListener("click", async () => {
+                const btn = document.getElementById("updateYTDLP");
+                btn.classList.add("loading");  // Show loading style
+                btn.disabled = true;
+
+                try {
+                    const resp = await fetch("/update-ytdlp", { method: "POST" });
+                    const data = await resp.json();
+                    alert(data.message || "yt-dlp updated successfully!");
+                } catch (err) {
+                    alert("Error updating yt-dlp: " + err);
+                } finally {
+                    btn.classList.remove("loading");
+                    btn.disabled = false;
+                }
+            });
         })
 
         function getParams() {
@@ -202,6 +220,7 @@
             }
             changeLang()
         }
+        
         async function cookieAvailable() {
             const cookie = document.getElementById("cookie")
             const resp = await fetch("/cookie");
@@ -214,6 +233,7 @@
                 cookie.disabled = false;
             }
         }
+
         async function callbacks() {
             const callbacks = document.getElementById("callbacks")
             const resp = await fetch("/callbacks");
@@ -310,6 +330,12 @@
             }
         }
 
+        function toggleUpdateButton() {
+            const btn = document.getElementById("updateYTDLP");
+            btn.style.display = (localStorage.getItem("binary") === "ytdlp") ? "inline-block" : "none";
+        }
+
+
         document.addEventListener("DOMContentLoaded", () => {
             ts('.ts.dropdown:not(.basic)').dropdown();
 
@@ -324,9 +350,10 @@
                 elem.addEventListener("click", e => {
                     localStorage.setItem("binary", e.target.id);
                     document.getElementById("binary").innerHTML = e.target.id;
-                })
+                    toggleUpdateButton();
+                });
             }
-        })
+        });
         
     </script>
     <style>
@@ -396,6 +423,10 @@
                 </div>
             </div>
         </div>
+
+        <button id="updateYTDLP" class="ts circular teal button" style="margin-left: 10px; display: none;">
+            Update yt-dlp
+        </button>
     </div>
     <br><br>
     <div class="ts narrow container">

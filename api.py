@@ -55,9 +55,11 @@ else:
 
 # ----- ytdlp get -----
 def get_ytdlp():
+    print("[INFO] Starting to download yt-dlp")
     url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
     urllib.request.urlretrieve(url, './yt-dlp')
     subprocess.call("chmod +x ./yt-dlp", shell=True)
+    print("[INFO] Finished setting up yt-dlp")
 
 if 'YTDLP_BIN' in os.environ:
     ytarchive_path = Path(os.environ['YTDLP_BIN'])
@@ -259,6 +261,16 @@ def add_task(uid, process, task, binary, callback=False):
                 }
             }
 
+class UpdateYTDLP:
+    def on_post(self, req, resp):
+        try:
+            get_ytdlp()
+            resp.media = {"status": "success", "message": "yt-dlp updated successfully."}
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.media = {"status": "error", "message": str(e)}
+            resp.status = falcon.HTTP_500
+
 class Status:
     def on_get(self, req, resp):
         global statuses
@@ -403,6 +415,7 @@ class Callback:
         resp.status = falcon.HTTP_200
     
 api = falcon.App()
+api.add_route('/update-ytdlp', UpdateYTDLP())
 api.add_route('/status', Status())
 api.add_route('/record', Record())
 api.add_route('/cookie', CookieAvailable())
