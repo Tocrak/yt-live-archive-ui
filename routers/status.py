@@ -5,7 +5,7 @@ import os
 from fastapi import APIRouter, Request, Response
 from typing import Dict
 from dependencies import tasks
-from schemas import StatusDeleteRequest, TaskStatusResponseItem, TaskStatus
+from schemas import StatusDeleteRequest, TaskStatusResponseItem, TaskStatus 
 
 logger = logging.getLogger("app")
 router = APIRouter()
@@ -17,25 +17,24 @@ async def status():
 
     for uid, data in tasks.items():
         if data["completed"]:
-            out = data["output"]["out"]
-            err = data["output"]["err"]
-
-            if "ERROR:" in err:
+            log_output = data.get("final_log", "") 
+            if data["status"] == TaskStatus.ERROR.value:
                 status_code = TaskStatus.ERROR
-            elif err.strip():
+            elif "ERROR:" in log_output or "[CALLBACK ERROR:" in log_output or "[SYSTEM ERROR]" in log_output:
                 status_code = TaskStatus.WARNING
             else:
                 status_code = TaskStatus.DONE
 
             resp[uid] = TaskStatusResponseItem(
                 status=status_code,
-                output={"out": out, "err": err},
+                output=log_output, 
             )
         else:
-            status_code = TaskStatus.ACTIVE if data["active"] else TaskStatus.PENDING # Use Enum
+            live_output = data.get("progress_log", "")
+            status_code = TaskStatus.ACTIVE if data["active"] else TaskStatus.PENDING
             resp[uid] = TaskStatusResponseItem(
                 status=status_code,
-                output={"out": data["progress_log"]},
+                output=live_output, 
             )
     return resp
 

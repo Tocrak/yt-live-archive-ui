@@ -270,7 +270,7 @@ async function loadStatus() {
         const rec = data[uid];
         const logId = `log-${uid}`;
         const statusText = TASK_STATUS_MAP[rec.status] || rec.status;
-        const currentLogText = trimLeadingBlankLines(rec.output.out || "").replace(/\n/g, "<br>");
+        const currentLogText = trimLeadingBlankLines(rec.output || "").replace(/\n/g, "<br>");
         let isCollapsed = collapsedLogs.has(logId);
         let taskDiv = taskElements.get(uid);
         

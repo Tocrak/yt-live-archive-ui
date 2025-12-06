@@ -21,22 +21,17 @@ class TaskInternal:
     process: Optional[asyncio.subprocess.Process]
     task: Optional[asyncio.Task]
     progress_log: str
+    final_log: Optional[str] = None
     active: bool
     completed: bool
-    output: Dict[str, str]
     callbacks: List[str]
     started_log: bool
-
-class Output(BaseModel):
-    """Output log structure for a completed or active task."""
-    out: str
-    err: Optional[str] = None
 
 class TaskStatusResponseItem(BaseModel):
     """The structure of a single item in the /status response."""
     # 1: done, 2: error, 4: warning, 5: active/downloading, 6: pending/starting
     status: int = Field(..., description="Status code of the task.")
-    output: Output
+    output: str = Field(..., description="The complete, consolidated output log (STDOUT, STDERR, errors) for the task.")
     isUnfinished: bool = Field(False, description="Always False for this implementation's response structure.")
 
 class RecordRequest(BaseModel):
