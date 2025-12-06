@@ -10,6 +10,18 @@ const TASK_STATUS_MAP = {
     5: "Active",
     6: "Starting"
 };
+const parameterConfig = [
+    { storageKey: "binary", elementId: "binary", defaultValue: "ytdlp", type: "value" },
+    { storageKey: "downloadQuality", elementId: "quality", defaultValue: "best", type: "value" },
+    { storageKey: "downloadThumbnail", elementId: "thumbnail", defaultValue: true, type: "checked" },
+    { storageKey: "downloadWait", elementId: "wait", defaultValue: true, type: "checked" },
+    { storageKey: "downloadMkv", elementId: "mkv", defaultValue: true, type: "checked" },
+    { storageKey: "youtubeCookies", elementId: "youtubeCookies", defaultValue: false, type: "checked" },
+    { storageKey: "downloadOutput", elementId: "output", defaultValue: "%(channel)s - %(title)s", type: "value" },
+    { storageKey: "downloadRetryStream", elementId: "retryStream", defaultValue: "60", type: "value" },
+    { storageKey: "downloadThreads", elementId: "threads", defaultValue: "2", type: "value" },
+    { storageKey: "refreshInterval", elementId: "refreshInterval", defaultValue: "2", type: "value", isOptional: true },
+];
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDefaults();
@@ -30,79 +42,71 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-function loadDefaults() {
-    loadParametersFromStorage();
-    setupParameterListeners();
+function loadParameters() {
+    parameterConfig.forEach(config => {
+        const element = document.getElementById(config.elementId);
+        if (!element && config.isOptional) return;
+        if (!element) {
+            console.warn(`Element with ID '${config.elementId}' not found.`);
+            return;
+        }
+        const storedValue = localStorage.getItem(config.storageKey);
+
+        if (config.type === "checked") {
+            const defaultCheck = config.defaultValue;
+            element.checked = storedValue !== null 
+                ? storedValue === "true" 
+                : defaultCheck;
+        } else if (config.type === "value") {
+            const isStoredValueValid = storedValue && storedValue.trim() !== "";
+            element.value = isStoredValueValid
+                ? storedValue.trim()
+                : config.defaultValue;
+        }
+    });
 }
 
 function saveParameters() {
-    localStorage.setItem("binary", document.getElementById("binary").value);
-    localStorage.setItem("downloadQuality", document.getElementById("quality").value);
-    localStorage.setItem("downloadThumbnail", document.getElementById("thumbnail").checked);
-    localStorage.setItem("downloadWait", document.getElementById("wait").checked);
-    localStorage.setItem("downloadMkv", document.getElementById("mkv").checked);
-    localStorage.setItem("youtubeCookies", document.getElementById("youtubeCookies").checked);
-    localStorage.setItem("downloadOutput", document.getElementById("output").value.trim());
-    localStorage.setItem("downloadRetryStream", document.getElementById("retryStream").value.trim());
-    localStorage.setItem("downloadThreads", document.getElementById("threads").value.trim());
-    localStorage.setItem("refreshInterval", document.getElementById("refreshInterval").value);
+    parameterConfig.forEach(config => {
+        const element = document.getElementById(config.elementId);
+        if (!element) {
+            return;
+        }
+        let valueToSave;
+
+        if (config.type === "checked") {
+            valueToSave = element.checked.toString();
+        } else if (config.type === "value") {
+            valueToSave = element.value.trim();
+        }
+
+        localStorage.setItem(config.storageKey, valueToSave);
+    });
 }
 
-function loadParametersFromStorage() {
-    const qualityInput = document.getElementById("quality");
-    const thumbnailInput = document.getElementById("thumbnail");
-    const waitInput = document.getElementById("wait");
-    const mkvInput = document.getElementById("mkv");
-    const youtubeCookiesInput = document.getElementById("youtubeCookies");
-    const outputInput = document.getElementById("output");
-    const retryInput = document.getElementById("retryStream");
-    const threadsInput = document.getElementById("threads");
-    const binaryInput = document.getElementById("binary");
-    const refreshIntervalSelect = document.getElementById("refreshInterval");
+function setupListeners() {
+    parameterConfig.forEach(config => {
+        const element = document.getElementById(config.elementId);
+        if (!element) {
+            return;
+        }
 
-    qualityInput.value = localStorage.getItem("downloadQuality") || "best";
-    thumbnailInput.checked = localStorage.getItem("downloadThumbnail") === "true" || localStorage.getItem("downloadThumbnail") === null;
-    waitInput.checked = localStorage.getItem("downloadWait") === "true" || localStorage.getItem("downloadWait") === null;
-    mkvInput.checked = localStorage.getItem("downloadMkv") === "true" || localStorage.getItem("downloadMkv") === null;
-    youtubeCookiesInput.checked = localStorage.getItem("youtubeCookies") === "true";
-    outputInput.value = localStorage.getItem("downloadOutput") || "%(channel)s - %(title)s";
-    retryInput.value = localStorage.getItem("downloadRetryStream") || "60";
-    threadsInput.value = localStorage.getItem("downloadThreads") || "2";
-    binaryInput.value = localStorage.getItem("binary") || "ytdlp";
-    
-    if (refreshIntervalSelect) {
-        refreshIntervalSelect.value = localStorage.getItem("refreshInterval") || "2";
-    }
+        if (config.elementId === "refreshInterval") {
+            element.addEventListener("change", function() {
+                saveParameters();
+                if (typeof startStatusInterval === 'function') {
+                    startStatusInterval(); 
+                }
+            });
+        } else {
+            element.addEventListener("change", saveParameters);
+        }
+    });
 }
 
-function setupParameterListeners() {
-    const qualityInput = document.getElementById("quality");
-    const thumbnailInput = document.getElementById("thumbnail");
-    const waitInput = document.getElementById("wait");
-    const mkvInput = document.getElementById("mkv");
-    const youtubeCookiesInput = document.getElementById("youtubeCookies");
-    const outputInput = document.getElementById("output");
-    const retryInput = document.getElementById("retryStream");
-    const threadsInput = document.getElementById("threads");
-    const binaryInput = document.getElementById("binary");
-    const refreshIntervalSelect = document.getElementById("refreshInterval");
-
-    qualityInput.addEventListener("change", saveParameters);
-    thumbnailInput.addEventListener("change", saveParameters);
-    waitInput.addEventListener("change", saveParameters);
-    mkvInput.addEventListener("change", saveParameters);
-    youtubeCookiesInput.addEventListener("change", saveParameters);
-    outputInput.addEventListener("change", saveParameters);
-    retryInput.addEventListener("change", saveParameters);
-    threadsInput.addEventListener("change", saveParameters);
-    binaryInput.addEventListener("change", saveParameters);
-
-    if (refreshIntervalSelect) {
-        refreshIntervalSelect.addEventListener("change", function() {
-            saveParameters();
-            startStatusInterval();
-        });
-    }
+function loadDefaults() {
+    loadParameters();
+    setupListeners();
 }
 
 function startStatusInterval() {
