@@ -3,7 +3,7 @@ WORKDIR /app
 
 # Install ffmpeg & stdbuf
 RUN apk upgrade -U \ 
-    && apk add coreutils ffmpeg quickjs \
+    && apk add ffmpeg quickjs \
     && rm -rf /var/cache/*
 
 # Install the application dependencies

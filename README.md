@@ -26,7 +26,6 @@ The following are essential for the download binaries (`yt-dlp` in particular) t
 
   * **ffmpeg**: Required for merging/remuxing video and audio streams.
   * **quickjs**: A JavaScript engine needed by `yt-dlp` for certain complex site extractions.
-  * **coreutils** (including `stdbuf`).
 
 ### Download Binaries
 
