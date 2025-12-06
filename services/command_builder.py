@@ -1,7 +1,7 @@
 import os
 import logging
-from binary_manager import YTARCHIVE_PATH, YTDLP_PATH
-from config import COOKIE_FILE_PATH, YTDLP_MAP, YTARCHIVE_MAP
+from services.binary_manager import YTARCHIVE_PATH, YTDLP_PATH
+from config.config import COOKIE_FILE_PATH, YTDLP_MAP, YTARCHIVE_MAP
 
 logger = logging.getLogger("app")
 

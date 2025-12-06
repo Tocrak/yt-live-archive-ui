@@ -4,8 +4,8 @@ import logging
 import traceback
 
 from typing import Dict, Any, Awaitable, Callable, List
-from dependencies import tasks
-from schemas import TaskStatus 
+from config.dependencies import tasks
+from config.schemas import TaskStatus 
 
 logger = logging.getLogger("app")
 

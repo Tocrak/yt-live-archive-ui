@@ -8,12 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from logging_config import setup_logging
+from config.logging_config import setup_logging
 setup_logging()
 logger = logging.getLogger("app")
-
-from binary_manager import initialize_binaries
+from services.binary_manager import initialize_binaries
 from routers import status, downloader, utils
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")

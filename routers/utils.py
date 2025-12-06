@@ -4,9 +4,9 @@ import os
 
 from fastapi import APIRouter, Response, HTTPException
 from typing import Dict, Any, List
-from dependencies import tasks
-from schemas import UpdateYtDlpResponse
-from binary_manager import get_ytdlp
+from config.dependencies import tasks
+from config.schemas import UpdateYtDlpResponse
+from services.binary_manager import get_ytdlp
 
 logger = logging.getLogger("app")
 router = APIRouter()

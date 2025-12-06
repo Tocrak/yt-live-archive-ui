@@ -4,8 +4,8 @@ import os
 
 from fastapi import APIRouter, Request, Response
 from typing import Dict
-from dependencies import tasks
-from schemas import StatusDeleteRequest, TaskStatusResponseItem, TaskStatus 
+from config.dependencies import tasks
+from config.schemas import StatusDeleteRequest, TaskStatusResponseItem, TaskStatus 
 
 logger = logging.getLogger("app")
 router = APIRouter()

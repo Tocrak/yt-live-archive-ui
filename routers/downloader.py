@@ -2,10 +2,10 @@ import asyncio
 import logging
 from fastapi import APIRouter
 from typing import Dict, Any
-from schemas import RecordRequest
-from dependencies import tasks
-from command_builder import build_ytarchive_cmd, build_ytdlp_cmd
-from task_runner import get_id, run_download
+from config.schemas import RecordRequest
+from config.dependencies import tasks
+from services.command_builder import build_ytarchive_cmd, build_ytdlp_cmd
+from services.task_runner import get_id, run_download
 
 logger = logging.getLogger("app")
 router = APIRouter()

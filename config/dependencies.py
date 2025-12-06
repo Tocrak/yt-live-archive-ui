@@ -1,4 +1,4 @@
 from typing import Dict, Any
-from schemas import TaskInternal
+from config.schemas import TaskInternal
 
 tasks: Dict[str, Any] = {}
