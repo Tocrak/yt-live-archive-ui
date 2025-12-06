@@ -11,8 +11,8 @@ class TaskStatus(IntEnum):
     DONE = 1
     ERROR = 2
     WARNING = 4
-    ACTIVE = 5 # Downloading/Progressing
-    PENDING = 6 # Waiting to start
+    ACTIVE = 5
+    PENDING = 6
 
 class TaskInternal:
     """Internal structure for the tasks dictionary."""

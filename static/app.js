@@ -190,19 +190,26 @@ async function startDownload() {
         callbacks: []
     };
     const threads = document.getElementById("threads").value.trim();
-    if (threads) body.params["--threads"] = threads;
+    if (threads) body.params["threads"] = threads;
+    
     const retry = document.getElementById("retryStream").value.trim();
-    if (retry) body.params["--retry-stream"] = retry;
+    if (retry) body.params["retry_stream"] = retry; 
+    
     if (document.getElementById("thumbnail").checked)
-        body.params["--thumbnail"] = true;
+        body.params["embed_thumbnail"] = true;
+    
     if (document.getElementById("mkv").checked)
-        body.params["--mkv"] = true;
+        body.params["force_mkv"] = true;
+    
     if (document.getElementById("wait").checked)
-        body.params["--wait"] = true;
+        body.params["wait_for_live"] = true;
+    
     if (document.getElementById("youtubeCookies").checked)
-        body.params["--cookies"] = true;
+        body.params["use_cookies"] = true;
+    
     const output = document.getElementById("output").value.trim();
-    if (output) body.params["--output"] = output;
+    if (output) body.params["output_filename"] = output;
+
     document.querySelectorAll("#callbackList input[type=checkbox]:checked")
         .forEach(cb => body.callbacks.push(cb.value));
     const resp = await fetch("/record", {
