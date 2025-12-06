@@ -26,17 +26,13 @@ def get_id(base: str) -> str:
         i += 1
 
 def extract_final_file_path(out_text: str, binary: str) -> str | None:
-    """Extracts the final file path from the output log."""
-    destination_match = re.search(
-        r'\[download\] Destination:\s*["\']?(?P<path>.+?)["\']?$', 
-        out_text, 
-        re.MULTILINE
-    )
-
+    """Extracts the final downloaded file path from the output logs."""
+    match = re.search(r'(?:Merging formats into|Destination):\s*["\']?(?P<path>.+?)["\']?$', out_text, re.MULTILINE)
+    
     if binary == "ytarchive" and "Final file:" in out_text:
         return out_text.split("Final file:")[-1].strip()
-    elif binary in ("ytdlp", "yt-dlp") and destination_match:
-        return destination_match.group('path').strip()
+    elif binary == "ytdlp" and match:
+        return match.group('path').strip()
     return None
 
 async def _process_stream_line(
