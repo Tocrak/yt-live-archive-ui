@@ -1,4 +1,5 @@
 import os
+import re
 import falcon
 import fcntl
 import json
@@ -177,6 +178,7 @@ def archive_ytdlp(url, quality, params={}, callback_ids=[], on_callback=None, on
         cmd += f" -x --extract-audio"
     elif quality != "best":
         cmd += f" -f bestvideo[height={quality[:-1]}]"
+    cmd += f"--progress --newline --no-colors"
     cmd += f" {url}"
 
     print(f"[INFO] Archiving the livestream via yt-dlp: {cmd}")
@@ -254,7 +256,7 @@ def add_task(uid, process, task, binary, callback=False):
                 "task": task, 
                 "process": process,
                 "active": False,
-                "early_log": "",
+                "progress_log": "",
                 "callbacks": {
                     "queue": [],
                     "current": -1
@@ -311,7 +313,7 @@ class Status:
                         status = 1 # Done status
                     resp.media[uid] = {
                         "status": status,
-                        "output": {"out": statuses[uid]["early_log"] + out, "err": err},
+                        "output": {"out": statuses[uid]["progress_log"] + out, "err": err},
                         "isUnfinished": is_unfinished
                     }
                 except Exception as err:
@@ -326,28 +328,41 @@ class Status:
                     "callbacks": statuses[uid]["callbacks"]
                 }
             else:                
-                if statuses[uid]["binary"] != "ytarchive" and not statuses[uid].get("active"):
+                if statuses[uid]["binary"] != "ytarchive":
                     process = statuses[uid]["process"]
                     fd = process.stdout.fileno()
                     try:
                         chunk = os.read(fd, 4096)
                         if chunk:
                             text = chunk.decode('utf-8', errors='replace')
-                            statuses[uid]["early_log"] += text
-                            if "[download]" in text or "Downloaded" in text:
-                                statuses[uid]["active"] = True
+                            lines = text.splitlines()
+                            prev_lines = statuses[uid]["progress_log"].splitlines() if statuses[uid]["progress_log"] else []
+
+                            for line in lines:
+                                line = line.strip()
+                                line = re.sub(r'^\d+: ', '', line)
+
+                                if line.startswith('[download]'):
+                                    statuses[uid]["active"] = True
+                                    if prev_lines and prev_lines[-1].startswith('[download]'):
+                                        prev_lines[-1] = line
+                                    else:
+                                        prev_lines.append(line)
+                                else:
+                                    prev_lines.append(line)
+                            
+                            statuses[uid]["progress_log"] = '\n'.join(prev_lines)
                     except BlockingIOError:
-                        # No data available right now
                         pass
                     except Exception as e:
                         print(f"Error reading stdout for {uid}: {e}")
 
-                status = 5 if statuses[uid].get("active") else 6
+                status = 5 if statuses[uid].get("active", False) else 6
                 resp.media[uid] = {
-                        "status": status,
-                        "output": {"out": statuses[uid]["early_log"], "err": None},
-                        "isUnfinished": False
-                    }
+                    "status": status,
+                    "output": {"out": statuses[uid]["progress_log"], "err": None},
+                    "isUnfinished": False
+                }
 
         resp.status = falcon.HTTP_200
 

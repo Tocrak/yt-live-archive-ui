@@ -101,28 +101,78 @@
             return result;
         }
 
-        function editMessage(message){
+        let currentLogTab = "stdout";
+
+        function editMessage(message) {
             document.getElementById("message").innerText = message;
         }
 
-        function showMessage(){
-            document.querySelector("#dialog .header").dataset.string = "stdout"
-            changeLang(window.lang);
-
+        function showMessage() {
             ts('#dialog').modal({
                 onApprove: () => {
-                    document.querySelector("#dialog .header").dataset.string = "stdout"
+                    currentLogTab = "stdout";
+                    document.querySelector("#dialog .header").dataset.string = "stdout";
                     changeLang(window.lang);
                     editMessage(window._output.out);
                     return false;
                 },
                 onDeny: () => {
-                    document.querySelector("#dialog .header").dataset.string = "stderr"
+                    currentLogTab = "stderr";
+                    document.querySelector("#dialog .header").dataset.string = "stderr";
                     changeLang(window.lang);
                     editMessage(window._output.err);
                     return false;
                 }
             }).modal("show")
+        }
+
+        status.addEventListener("click", () => {
+            window._output = v.output;
+            if (currentLogTab === "stderr") {
+                editMessage(window._output.err);
+            } else {
+                editMessage(window._output.out);
+            }
+            showMessage();
+        });
+
+        let logInterval = null;
+
+        function openLiveLog(uid) {
+            currentLogTab = "stdout";
+
+            ts('#dialog').modal({
+                onHide: () => clearInterval(logInterval),
+                onApprove: () => {
+                    currentLogTab = "stdout";
+                    editMessage(window._output.out);
+                    return false;
+                },
+                onDeny: () => {
+                    currentLogTab = "stderr";
+                    editMessage(window._output.err);
+                    return false;
+                }
+            }).modal("show");
+
+            logInterval = setInterval(async () => {
+                const resp = await fetch("/status");
+                const status = await resp.json();
+                const entry = status[uid];
+                if (!entry) return;
+
+                window._output = { out: entry.output?.out || "", err: entry.output?.err || "" };
+
+                if (currentLogTab === "stderr") {
+                    editMessage(window._output.err);
+                } else {
+                    editMessage(window._output.out);
+                }
+
+                if ([1, 2, 4].includes(entry.status)) {
+                    clearInterval(logInterval);
+                }
+            }, 1000);
         }
 
         async function statuses() {
@@ -208,9 +258,7 @@
                 }
 
                 status.addEventListener("click", () => {
-                    window._output = v.output;
-                    editMessage(v.output.out)
-                    showMessage()
+                    openLiveLog(k);
                 })
 
                 clone.querySelector("tr").appendChild(status)
