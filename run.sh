@@ -2,5 +2,5 @@
 
 while true; do
     echo "Starting service..."
-    gunicorn -b 0.0.0.0:8099 api:api
+    uvicorn app:app --host 0.0.0.0 --port 8099 --no-access-log
 done

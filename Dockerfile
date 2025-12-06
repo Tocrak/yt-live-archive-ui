@@ -1,10 +1,9 @@
-FROM python:3.12.3-alpine3.20
+FROM python:3.12.12-alpine
 WORKDIR /app
 
 # Install ffmpeg & stdbuf
 RUN apk upgrade -U \ 
-    && apk add ffmpeg \
-    && apk add coreutils \
+    && apk add coreutils ffmpeg quickjs \
     && rm -rf /var/cache/*
 
 # Install the application dependencies

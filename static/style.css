@@ -1,0 +1,247 @@
+:root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #111111;
+    --card-bg: #f4f4f4;
+    --border: #cccccc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #121212;
+        --fg: #eaeaea;
+        --card-bg: #1e1e1e;
+        --border: #333333;
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, sans-serif;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    position: relative;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 25px;
+}
+
+h1, h2, h3 {
+    margin-top: 0;
+    margin-bottom: 15px; 
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 10px; 
+}
+
+.form-row.form-row-compact {
+    display: grid;
+    grid-template-columns: 1fr 3fr; 
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px; 
+}
+
+.form-row-group {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 15px;
+}
+
+.form-row.half-width {
+    flex: 1;
+}
+
+.form-row.wide {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+    margin-bottom: 20px;
+}
+
+.form-row.checkbox-row {
+    grid-template-columns: 1fr auto;
+}
+
+.form-row.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    justify-self: end;
+}
+
+input, select {
+    padding: 10px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--fg);
+}
+
+input:not([type="checkbox"]), select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 12px 20px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--fg);
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: var(--border);
+}
+
+.task {
+    border: 1px solid var(--border);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+}
+
+.task strong {
+    font-size: 1.1em;
+}
+
+.log {
+    white-space: pre-wrap;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    font-family: monospace;
+    font-size: 0.9em;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease;
+    overflow-x: auto;
+}
+
+.log.expanded {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.log-toggle {
+    margin-top: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remove-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.remove-btn.confirm-state {
+    background: #ffaa00;
+    color: white;
+    border-color: #ffaa00;
+}
+
+.remove-btn.confirm-state:hover {
+    background: #cc8800;
+    border-color: #cc8800;
+}
+
+.notice {
+    display: none;
+    background: #2a2;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+.notice.error {
+    background: #d44;
+}
+
+.notice.warning {
+    background: #ffaa00;
+}
+
+.task-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.task-controls h2 {
+    margin: 0; 
+}
+
+.task-controls .refresh-control {
+    display: flex; 
+    align-items: center;
+    gap: 5px;
+}
+
+.task-controls .refresh-control label {
+    white-space: nowrap;
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-right: 0;
+}
+
+.task-controls select {
+    width: auto; 
+    min-width: 50ps;
+    padding: 4px 6px;
+}
+
+.update-button-container {
+    margin-left: auto; 
+    display: block; 
+    width: auto;
+    padding: 0;
+}
+
+.button-group {
+    display: flex;
+    align-items: center; 
+    width: 100%; 
+    margin-top: 10px; 
+}
