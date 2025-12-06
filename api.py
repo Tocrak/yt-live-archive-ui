@@ -62,17 +62,17 @@ def get_ytdlp():
     print("[INFO] Finished setting up yt-dlp")
 
 if 'YTDLP_BIN' in os.environ:
-    ytarchive_path = Path(os.environ['YTDLP_BIN'])
+    ytdlp_path  = Path(os.environ['YTDLP_BIN'])
     print("[INFO] Using YTDLP_BIN env variable")
-    if ytarchive_path.is_file():
+    if ytdlp_path .is_file():
         print("[INFO] Using yt-dlp binaries")
     else:
         print("[INFO] yt-dlp not found. Downloading...")
         get_ytdlp()
 else:
-    ytarchive_path = Path("./yt-dlp")
+    ytdlp_path  = Path("./yt-dlp")
     print("[WARN] No YTDLP_BIN env variable set. Checking local")
-    if ytarchive_path.is_file():
+    if ytdlp_path .is_file():
         print("[INFO] Using local yt-dlp binaries")
     else:
         print("[INFO] yt-dlp not found. Downloading...")
