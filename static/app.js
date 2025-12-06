@@ -41,6 +41,7 @@ function saveParameters() {
     localStorage.setItem("downloadThumbnail", document.getElementById("thumbnail").checked);
     localStorage.setItem("downloadWait", document.getElementById("wait").checked);
     localStorage.setItem("downloadMkv", document.getElementById("mkv").checked);
+    localStorage.setItem("youtubeCookies", document.getElementById("youtubeCookies").checked);
     localStorage.setItem("downloadOutput", document.getElementById("output").value.trim());
     localStorage.setItem("downloadRetryStream", document.getElementById("retryStream").value.trim());
     localStorage.setItem("downloadThreads", document.getElementById("threads").value.trim());
@@ -52,6 +53,7 @@ function loadParametersFromStorage() {
     const thumbnailInput = document.getElementById("thumbnail");
     const waitInput = document.getElementById("wait");
     const mkvInput = document.getElementById("mkv");
+    const youtubeCookiesInput = document.getElementById("youtubeCookies");
     const outputInput = document.getElementById("output");
     const retryInput = document.getElementById("retryStream");
     const threadsInput = document.getElementById("threads");
@@ -62,6 +64,7 @@ function loadParametersFromStorage() {
     thumbnailInput.checked = localStorage.getItem("downloadThumbnail") === "true" || localStorage.getItem("downloadThumbnail") === null;
     waitInput.checked = localStorage.getItem("downloadWait") === "true" || localStorage.getItem("downloadWait") === null;
     mkvInput.checked = localStorage.getItem("downloadMkv") === "true" || localStorage.getItem("downloadMkv") === null;
+    youtubeCookiesInput.checked = localStorage.getItem("youtubeCookies") === "true";
     outputInput.value = localStorage.getItem("downloadOutput") || "%(channel)s - %(title)s";
     retryInput.value = localStorage.getItem("downloadRetryStream") || "60";
     threadsInput.value = localStorage.getItem("downloadThreads") || "2";
@@ -77,6 +80,7 @@ function setupParameterListeners() {
     const thumbnailInput = document.getElementById("thumbnail");
     const waitInput = document.getElementById("wait");
     const mkvInput = document.getElementById("mkv");
+    const youtubeCookiesInput = document.getElementById("youtubeCookies");
     const outputInput = document.getElementById("output");
     const retryInput = document.getElementById("retryStream");
     const threadsInput = document.getElementById("threads");
@@ -87,6 +91,7 @@ function setupParameterListeners() {
     thumbnailInput.addEventListener("change", saveParameters);
     waitInput.addEventListener("change", saveParameters);
     mkvInput.addEventListener("change", saveParameters);
+    youtubeCookiesInput.addEventListener("change", saveParameters);
     outputInput.addEventListener("change", saveParameters);
     retryInput.addEventListener("change", saveParameters);
     threadsInput.addEventListener("change", saveParameters);
@@ -173,7 +178,8 @@ async function startDownload() {
     const youtubeIDInput = document.getElementById("youtubeID");
     const youtubeID = extractVideoId(youtubeIDInput.value.trim());
     if (!youtubeID) {
-        return alert("Enter a YouTube ID");
+        notify("Enter a YouTube ID or URL", 'error');
+        return;
     }
     youtubeIDInput.value = "";
     const body = {
@@ -193,6 +199,8 @@ async function startDownload() {
         body.params["--mkv"] = true;
     if (document.getElementById("wait").checked)
         body.params["--wait"] = true;
+    if (document.getElementById("youtubeCookies").checked)
+        body.params["--cookies"] = true;
     const output = document.getElementById("output").value.trim();
     if (output) body.params["--output"] = output;
     document.querySelectorAll("#callbackList input[type=checkbox]:checked")
