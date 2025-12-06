@@ -136,12 +136,6 @@ function extractVideoId(input) {
     return input.trim();
 }
 
-function trimLeadingBlankLines(text) {
-    let cleanedText = text.replace(/^(?:\s*\n)+/, "");
-    cleanedText = cleanedText.replace(/^[\s\xA0]+/, "");
-    return cleanedText;
-}
-
 function notify(msg, type = 'success') {
     const n = document.getElementById("notice");
     if (notifyTimeoutId) {
@@ -270,7 +264,7 @@ async function loadStatus() {
         const rec = data[uid];
         const logId = `log-${uid}`;
         const statusText = TASK_STATUS_MAP[rec.status] || rec.status;
-        const currentLogText = trimLeadingBlankLines(rec.output || "").replace(/\n/g, "<br>");
+        const currentLogText = `<br>${(rec.output || "").replace(/\n/g, "<br>")}`;
         let isCollapsed = collapsedLogs.has(logId);
         let taskDiv = taskElements.get(uid);
         

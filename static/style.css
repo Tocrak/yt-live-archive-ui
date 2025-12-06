@@ -135,7 +135,7 @@ button:hover {
 .log {
     white-space: pre-wrap;
     border-top: 1px solid var(--border);
-    padding-top: 10px;
+    margin-top: 10px;
     font-family: monospace;
     font-size: 0.9em;
     overflow: hidden;
