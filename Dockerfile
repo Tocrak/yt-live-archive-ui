@@ -1,7 +1,7 @@
 FROM python:3.12.12-alpine
 WORKDIR /app
 
-# Install ffmpeg & stdbuf
+# Install ffmpeg & quickjs
 RUN apk upgrade -U \ 
     && apk add ffmpeg quickjs \
     && rm -rf /var/cache/*
