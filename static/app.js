@@ -533,7 +533,7 @@ class WebUIController {
             const data = await resp.json();
 
             const incomingTaskIds = new Set(Object.keys(data));
-            const sortedUids = Array.from(incomingTaskIds).sort();
+            const sortedUids = Array.from(incomingTaskIds);
 
             this.removeOldTasks(incomingTaskIds);
             this.updateOrCreateTasks(sortedUids, data, container);
