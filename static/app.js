@@ -23,14 +23,19 @@ class WebUIController {
     ];
 
     FLAG_TO_CANONICAL_MAP = {
-        '--output': 'output_filename', '-o': 'output_filename',
-        '--wait-for-video': 'retry_stream', '--concurrent-fragments': 'threads',
-        '--live-from-start': 'wait_for_live', '--embed-thumbnail': 'embed_thumbnail',
-        '--retry-stream': 'retry_stream', '--threads': 'threads',
-        '--wait': 'wait_for_live', '--thumbnail': 'embed_thumbnail',
+        '--output': 'output_filename',
+        '-o': 'output_filename',
+        '--wait-for-video': 'retry_stream',
+        '--concurrent-fragments': 'threads',
+        '--live-from-start': 'wait_for_live',
+        '--embed-thumbnail': 'embed_thumbnail',
+        '--retry-stream': 'retry_stream',
+        '--threads': 'threads',
+        '--wait': 'wait_for_live',
+        '--thumbnail': 'embed_thumbnail',
     };
 
-    YTDLP_MKV_HIERARCHY = ['--recode-video', '--remux-video', '--merge-output-format'];
+    MKV_HIERARCHY = ['--recode-video', '--remux-video', '--merge-output-format'];
 
     statusIntervalId = null;
     notifyTimeoutId = null;
@@ -241,7 +246,7 @@ class WebUIController {
         let disableForceMkv = false;
         let setForceMkvChecked = false;
 
-        for (const flag of this.YTDLP_MKV_HIERARCHY) {
+        for (const flag of this.MKV_HIERARCHY) {
             const value = customParams[flag];
             if (value !== undefined) {
                 disableForceMkv = true;

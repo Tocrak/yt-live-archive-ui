@@ -36,10 +36,10 @@ def extract_final_file_path(out_text: str, binary: str) -> str | None:
     return None
 
 async def _process_stream_line(
-    uid: str, 
-    data: Dict[str, Any], 
-    line: str, 
-    progress_re: re.Pattern, 
+    uid: str,
+    data: Dict[str, Any],
+    line: str,
+    progress_re: re.Pattern,
     stream_name: str
 ):
     """Handles parsing and logging for a single line from stdout/stderr."""
@@ -63,24 +63,7 @@ async def _process_stream_line(
         
     data["progress_log"] = "\n".join(prev)
 
-async def run_download(uid: str):
-    """
-    Main function to execute the download command, stream output,
-    update task state, and execute callbacks.
-    """
-    if uid not in tasks:
-        logger.error(f"[{uid}] Task ID not found in tasks dictionary. Aborting.")
-        return 
-
-    data: Dict[str, Any] = tasks[uid]
-    cmd = data["cmd"]
-
-    logger.info(f"[{uid}] Starting task (Status: {TaskStatus(data.get('status', TaskStatus.PENDING)).name})")
-    logger.info(f"[{uid}] Executing command:\n{cmd}")
-    
-    progress_re = re.compile(r"(?:^\d+:\s+)?\[download\].+(?: at |ETA|\%)")
-
-    async def handle_stream(stream: asyncio.StreamReader, callback: Callable[[str], Awaitable[None]]):
+async def handle_stream(stream: asyncio.StreamReader, callback: Callable[[str], Awaitable[None]]):
         while True:
             try:
                 chunk = await stream.readline()
@@ -95,13 +78,34 @@ async def run_download(uid: str):
             if line:
                 await callback(line)
 
-    async def handle_stdout(line: str):
-        """Processes standard output for progress tracking and logging."""
-        await _process_stream_line(uid, data, line, progress_re, "STDOUT")
+async def handle_stdout(line: str):
+    """Processes standard output for progress tracking and logging."""
+    current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
+    await _process_stream_line(uid, data, line, current_re, "STDOUT")
 
-    async def handle_stderr(line: str):
-        """Processes standard error for errors and logging."""
-        await _process_stream_line(uid, data, line, progress_re, "STDERR")
+async def handle_stderr(line: str):
+    """Processes standard error for errors and logging."""
+    current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
+    await _process_stream_line(uid, data, line, current_re, "STDERR")
+
+async def run_download(uid: str):
+    """
+    Main function to execute the download command, stream output,
+    update task state, and execute callbacks.
+    """
+    if uid not in tasks:
+        logger.error(f"[{uid}] Task ID not found in tasks dictionary. Aborting.")
+        return 
+
+    data: Dict[str, Any] = tasks[uid]
+    cmd = data["cmd"]
+    binary_type = data["binary"]
+
+    logger.info(f"[{uid}] Starting task (Status: {TaskStatus(data.get('status', TaskStatus.PENDING)).name})")
+    logger.info(f"[{uid}] Executing command:\n{cmd}")
+    
+    ytdlp_progress_re = re.compile(r"(?:^\d+:\s+)?\[download\].+(?: at |ETA|\%)")
+    ytarchive_progress_re = re.compile(r"^(?:Video Fragments|Audio Fragments|Total Downloaded):")
 
     proc = None
     try:
