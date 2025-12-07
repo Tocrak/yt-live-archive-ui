@@ -239,6 +239,11 @@ async function updateYtdlp() {
 async function loadStatus() {
     const scrollY = window.scrollY;
     const resp = await fetch("/status");
+    if (!resp.ok) {
+        const errorText = await resp.text();
+        console.error(`[LoadStatus Error ${resp.status}] Server responded with non-OK status. Response Body:`, errorText);
+        return;
+    }
     const data = await resp.json();
     const container = document.getElementById("taskList");
     const incomingTaskIds = new Set(Object.keys(data));
