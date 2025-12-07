@@ -11,6 +11,7 @@ class WebUIController {
     PARAMETER_CONFIG = [
         { key: "binary", elementId: "binary", defaultValue: "ytdlp", type: "value" },
         { key: "downloadQuality", elementId: "quality", defaultValue: "best", type: "value" },
+        { key: "embed_metadata", elementId: "metadata", defaultValue: true, type: "checked" },
         { key: "embed_thumbnail", elementId: "thumbnail", defaultValue: true, type: "checked" },
         { key: "wait_for_live", elementId: "wait", defaultValue: true, type: "checked" },
         { key: "force_mkv", elementId: "mkv", defaultValue: true, type: "checked", isOptional: true },
@@ -25,13 +26,17 @@ class WebUIController {
     FLAG_TO_CANONICAL_MAP = {
         '--output': 'output_filename',
         '-o': 'output_filename',
+        // yt-dlp
         '--wait-for-video': 'retry_stream',
         '--concurrent-fragments': 'threads',
         '--live-from-start': 'wait_for_live',
+        '--embed-metadata': 'embed_metadata',
         '--embed-thumbnail': 'embed_thumbnail',
+        // ytarchive
         '--retry-stream': 'retry_stream',
         '--threads': 'threads',
         '--wait': 'wait_for_live',
+        '--add-metadata': 'embed_metadata',
         '--thumbnail': 'embed_thumbnail',
     };
 
