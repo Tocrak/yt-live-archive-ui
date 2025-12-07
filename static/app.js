@@ -314,6 +314,16 @@ class WebUIController {
             this.notify("Enter a YouTube ID or URL", 'error');
             return;
         }
+        if (this.taskElements.has(youtubeID)) {
+            const taskElement = this.taskElements.get(youtubeID);
+            const statusElement = taskElement.querySelector('.task-status');
+            const statusText = statusElement ? statusElement.textContent : 'Unknown';
+
+            if (statusText === 'Active' || statusText === 'Starting') {
+                this.notify(`A task for video ID ${youtubeID} already exists (Status: ${statusText}).`, 'error');
+                return;
+            }
+        }
         youtubeIDInput.value = "";
 
         this.updateUiFromCustomParams();

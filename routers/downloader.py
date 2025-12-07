@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from config.schemas import RecordRequest
 from config.dependencies import tasks
@@ -19,8 +19,13 @@ async def record(body: RecordRequest) -> Dict[str, str]:
     params = body.params
     binary = body.binary
     callback_ids = body.callbacks or []
-
     uid = get_id(youtube_id)
+
+    if uid in tasks:
+        raise HTTPException(
+            status_code=409,
+            detail=f"A task for video ID {youtube_id} (UID: {uid}) already exists. Please remove the previous one if needed."
+        )
 
     if binary == "ytarchive":
         cmd = build_ytarchive_cmd(url, quality, params)
