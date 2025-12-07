@@ -323,3 +323,27 @@ select[disabled] {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+@media (max-width: 800px) {
+    .button-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .update-controls-wrapper {
+        margin-left: 0;
+        align-items: center; 
+        flex-direction: row;
+        padding-right: 0;
+    }
+    
+    .update-button-container {
+        width: auto; 
+        flex: 1;
+    }
+
+    .button-group > button:first-child {
+        width: 100%;
+    }
+}
