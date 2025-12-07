@@ -63,31 +63,6 @@ async def _process_stream_line(
         
     data["progress_log"] = "\n".join(prev)
 
-async def handle_stream(stream: asyncio.StreamReader, callback: Callable[[str], Awaitable[None]]):
-        while True:
-            try:
-                chunk = await stream.readline()
-                if not chunk:
-                    break
-                decoded = chunk.decode("utf-8", errors="replace")
-            except Exception as e:
-                logger.error(f"[{uid}] Stream reading error: {e}", exc_info=True)
-                break
-                
-            line = decoded.replace('\r', '').strip()
-            if line:
-                await callback(line)
-
-async def handle_stdout(line: str):
-    """Processes standard output for progress tracking and logging."""
-    current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
-    await _process_stream_line(uid, data, line, current_re, "STDOUT")
-
-async def handle_stderr(line: str):
-    """Processes standard error for errors and logging."""
-    current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
-    await _process_stream_line(uid, data, line, current_re, "STDERR")
-
 async def run_download(uid: str):
     """
     Main function to execute the download command, stream output,
@@ -105,7 +80,37 @@ async def run_download(uid: str):
     logger.info(f"[{uid}] Executing command:\n{cmd}")
     
     ytdlp_progress_re = re.compile(r"(?:^\d+:\s+)?\[download\].+(?: at |ETA|\%)")
-    ytarchive_progress_re = re.compile(r"^(?:Video Fragments|Audio Fragments|Total Downloaded):")
+    ytarchive_progress_re = re.compile(r"(Video Fragments|Audio Fragments|Total Downloaded):")
+    
+    stream_buffers = {"STDOUT": "", "STDERR": ""} 
+
+    async def handle_stream(stream: asyncio.StreamReader, callback: Callable[[str], Awaitable[None]], stream_type: str):
+        while True:
+            try:
+                chunk = await stream.readline()
+                if not chunk:
+                    break
+                decoded = chunk.decode("utf-8", errors="replace")
+                
+            except Exception as e:
+                logger.error(f"[{uid}] Stream reading error on {stream_type}: {e}", exc_info=True)
+                break
+
+            r_parts = decoded.split('\r')
+            for part in r_parts:
+                line = part.strip()
+                if line:
+                    await callback(line)
+    
+    async def handle_stdout(line: str):
+        """Processes standard output for progress tracking and logging."""
+        current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
+        await _process_stream_line(uid, data, line, current_re, "STDOUT")
+
+    async def handle_stderr(line: str):
+        """Processes standard error for errors and logging."""
+        current_re = ytarchive_progress_re if binary_type == "ytarchive" else ytdlp_progress_re
+        await _process_stream_line(uid, data, line, current_re, "STDERR")
 
     proc = None
     try:
@@ -128,8 +133,8 @@ async def run_download(uid: str):
         data["final_log"] = data["progress_log"]
         return
 
-    t_out = asyncio.create_task(handle_stream(proc.stdout, handle_stdout))
-    t_err = asyncio.create_task(handle_stream(proc.stderr, handle_stderr))
+    t_out = asyncio.create_task(handle_stream(proc.stdout, handle_stdout, "STDOUT"))
+    t_err = asyncio.create_task(handle_stream(proc.stderr, handle_stderr, "STDERR"))
     logger.info(f"[{uid}] Waiting for process to finish...")
     await asyncio.gather(t_out, t_err)
     rc = await proc.wait()
@@ -181,6 +186,6 @@ async def run_download(uid: str):
                     data["final_log"] += callback_error 
                     
                     if data["status"] == TaskStatus.DONE.value:
-                         data["status"] = TaskStatus.WARNING.value
+                        data["status"] = TaskStatus.WARNING.value
 
     logger.info(f"[{uid}] Task finished with final status: {TaskStatus(data['status']).name}")
