@@ -187,7 +187,7 @@ button:hover {
     padding: 8px 14px;
     border-radius: 6px;
     font-size: 14px;
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 20px;
     z-index: 1000;

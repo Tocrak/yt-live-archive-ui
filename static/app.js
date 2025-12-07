@@ -19,7 +19,7 @@ const parameterConfig = [
     { storageKey: "youtubeCookies", elementId: "youtubeCookies", defaultValue: false, type: "checked" },
     { storageKey: "downloadOutput", elementId: "output", defaultValue: "%(channel)s - %(title)s", type: "value" },
     { storageKey: "downloadRetryStream", elementId: "retryStream", defaultValue: "60", type: "value" },
-    { storageKey: "downloadThreads", elementId: "threads", defaultValue: "2", type: "value" },
+    { storageKey: "downloadThreads", elementId: "threads", defaultValue: "1", type: "value" },
     { storageKey: "refreshInterval", elementId: "refreshInterval", defaultValue: "2", type: "value", isOptional: true },
 ];
 
@@ -145,13 +145,15 @@ function notify(msg, type = 'success') {
     n.className = "notice"; 
     if (type === 'error') {
         n.classList.add("error");
+    } else if (type === 'warning') {
+        n.classList.add("warning")
     }
     n.style.display = "block";
 
     notifyTimeoutId = setTimeout(() => {
         n.style.display = "none";
         notifyTimeoutId = null;
-    }, 2000);
+    }, 3000);
 }
 
 async function loadCallbacks() {
@@ -226,9 +228,10 @@ async function updateYtdlp() {
     const data = await resp.json();
 
     if (resp.ok) {
-        notify(data.message); 
+        notify(data.message);
     } else {
-        notify(data.message, 'error'); 
+        const errorMessage = data.detail || "An unknown error occurred.";
+        notify(errorMessage, 'error'); 
     }
     loadStatus(); 
 }

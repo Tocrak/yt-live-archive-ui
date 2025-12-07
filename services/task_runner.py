@@ -108,7 +108,8 @@ async def run_download(uid: str):
         proc = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            limit=1024 * 1024 # 1MB
         )
         data["process"] = proc
         data["status"] = TaskStatus.ACTIVE.value
