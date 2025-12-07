@@ -54,6 +54,7 @@ class WebUIController {
             "startBtn", "updateYtdlpBtn", "youtubeID", "notice",
             "callbackRow", "callbackList", "taskList", "customParams",
             "mkv", "quality", "binary",
+            "parametersToggle", "parametersContent",
         ]);
 
         this.removeTaskHandler = this.removeTaskHandler.bind(this);
@@ -78,6 +79,7 @@ class WebUIController {
 
     init() {
         this.loadParameters(); 
+        this.loadParametersCollapseState();
         this.updateUiFromCustomParams(); 
         this.setupListeners();
         this.loadCallbacks();
@@ -105,6 +107,11 @@ class WebUIController {
                     this.startDownload();
                 }
             });
+        }
+
+        const paramsToggle = this.getElement("parametersToggle"); 
+        if (paramsToggle) {
+            paramsToggle.addEventListener("click", () => this.toggleParameters());
         }
 
         const taskList = this.getElement("taskList");
@@ -291,6 +298,33 @@ class WebUIController {
                 }
             }
         }
+    }
+
+    loadParametersCollapseState() {
+        const isExpanded = localStorage.getItem("parametersExpanded") !== "false"; 
+        this.toggleParameters(isExpanded); 
+    }
+
+    toggleParameters(newState) {
+        const toggle = this.getElement("parametersToggle");
+        const content = this.getElement("parametersContent");
+
+        if (!toggle || !content) {
+            return;
+        }
+
+        const isCurrentlyExpanded = content.classList.contains("expanded");
+        const finalState = newState !== undefined ? newState : !isCurrentlyExpanded;
+
+        if (finalState) {
+            toggle.classList.add("expanded");
+            content.classList.add("expanded");
+        } else {
+            toggle.classList.remove("expanded");
+            content.classList.remove("expanded");
+        }
+
+        localStorage.setItem("parametersExpanded", finalState.toString());
     }
 
     extractVideoId(input) {

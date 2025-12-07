@@ -20,79 +20,82 @@
                 <input id="youtubeID" placeholder="e.g. dQw4w9WgXcQ">
             </div>
 
-            <h3>Parameters</h3>
-            <div class="form-row-group">
-                <div class="form-row half-width">
-                    <label for="quality">Quality</label>
-                    <select id="quality">
-                        <option value="best">best</option>
-                        <option value="2160p">2160p</option>
-                        <option value="1440p">1440p</option>
-                        <option value="1080p">1080p</option>
-                        <option value="720p">720p</option>
-                        <option value="480p">480p</option>
-                        <option value="audio_only">audio only</option>
-                    </select>
+            <h3 id="parametersToggle" class="collapsible-header">Parameters</h3>
+            <div id="parametersContent" class="collapsible-content">
+                <div class="form-row-group">
+                    <div class="form-row half-width">
+                        <label for="quality">Quality</label>
+                        <select id="quality">
+                            <option value="best">best</option>
+                            <option value="2160p">2160p</option>
+                            <option value="1440p">1440p</option>
+                            <option value="1080p">1080p</option>
+                            <option value="720p">720p</option>
+                            <option value="480p">480p</option>
+                            <option value="audio_only">audio only</option>
+                        </select>
+                    </div>
+                    <div class="form-row half-width">
+                        <label for="binary">Binary</label>
+                        <select id="binary">
+                            <option value="ytdlp">yt-dlp</option>
+                            <option value="ytarchive">ytarchive</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-row half-width">
-                    <label for="binary">Binary</label>
-                    <select id="binary">
-                        <option value="ytdlp">yt-dlp</option>
-                        <option value="ytarchive">ytarchive</option>
-                    </select>
+                <div class="form-grid">
+                    <div class="form-row">
+                        <label for="threads">Threads (concurrent fragments)</label>
+                        <input id="threads" placeholder="e.g. 2" type="number" min="1">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="retryStream">Retry stream (seconds)</label>
+                        <input id="retryStream" placeholder="e.g. 60" type="number" min="0">
+                    </div>
+
+                    <div class="form-row checkbox-row">
+                        <label for="wait">Wait for live to start</label>
+                        <input type="checkbox" id="wait">
+                    </div>
+
+                    <div class="form-row checkbox-row">
+                        <label for="thumbnail">Embed thumbnail</label>
+                        <input type="checkbox" id="thumbnail">
+                    </div>
+
+                    <div class="form-row checkbox-row">
+                        <label for="mkv">Force MKV container</label>
+                        <input type="checkbox" id="mkv">
+                    </div>
+
+                    <div class="form-row checkbox-row">
+                        <label for="metadata">Embed Metadata</label>
+                        <input type="checkbox" id="metadata">
+                    </div>
+
+                    <div class="form-row checkbox-row">
+                        <label for="youtubeCookies">Use cookies</label>
+                        <input type="checkbox" id="youtubeCookies">
+                    </div>
+                </div>
+
+                <div class="form-row form-row-compact">
+                    <label for="output">Output filename</label>
+                    <input id="output" placeholder="myfile.mkv">
+                </div>
+
+                <div class="form-row form-row-compact">
+                    <label for="customParams">Custom Parameters</label>
+                    <input id="customParams" placeholder="e.g. --retries infinite --no-part">
+                </div>
+
+                <div class="form-row wide" id="callbackRow" style="display:none;">
+                    <label>Callbacks</label>
+                    <div id="callbackList"></div>
                 </div>
             </div>
-            <div class="form-grid">
-                <div class="form-row">
-                    <label for="threads">Threads (concurrent fragments)</label>
-                    <input id="threads" placeholder="e.g. 2" type="number" min="1">
-                </div>
 
-                <div class="form-row">
-                    <label for="retryStream">Retry stream (seconds)</label>
-                    <input id="retryStream" placeholder="e.g. 60" type="number" min="0">
-                </div>
-
-                <div class="form-row checkbox-row">
-                    <label for="wait">Wait for live to start</label>
-                    <input type="checkbox" id="wait">
-                </div>
-
-                <div class="form-row checkbox-row">
-                    <label for="thumbnail">Embed thumbnail</label>
-                    <input type="checkbox" id="thumbnail">
-                </div>
-
-                <div class="form-row checkbox-row">
-                    <label for="mkv">Force MKV container</label>
-                    <input type="checkbox" id="mkv">
-                </div>
-
-                <div class="form-row checkbox-row">
-                    <label for="metadata">Embed Metadata</label>
-                    <input type="checkbox" id="metadata">
-                </div>
-
-                <div class="form-row checkbox-row">
-                    <label for="youtubeCookies">Use cookies</label>
-                    <input type="checkbox" id="youtubeCookies">
-                </div>
-            </div>
-
-            <div class="form-row form-row-compact">
-                <label for="output">Output filename</label>
-                <input id="output" placeholder="myfile.mkv">
-            </div>
-
-            <div class="form-row form-row-compact">
-                <label for="customParams">Custom Parameters</label>
-                <input id="customParams" placeholder="e.g. --retries infinite --no-part">
-            </div>
-
-            <div class="form-row wide" id="callbackRow" style="display:none;">
-                <label>Callbacks</label>
-                <div id="callbackList"></div>
-            </div>
             <div class="button-group">
                 <button id="startBtn">Start Download</button>
                 <div class="update-button-container">
