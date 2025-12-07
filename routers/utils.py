@@ -5,8 +5,8 @@ import os
 from fastapi import APIRouter, Response, HTTPException
 from typing import Dict, Any, List
 from config.dependencies import tasks
-from config.schemas import UpdateYtDlpResponse
-from services.binary_manager import get_ytdlp
+from config.schemas import UpdateBinaryResponse
+from services.binary_manager import get_ytarchive, get_ytdlp
 
 logger = logging.getLogger("app")
 router = APIRouter()
@@ -16,7 +16,7 @@ try:
 except ImportError:
     callbacks = None
 
-@router.post("/update-ytdlp", response_model=UpdateYtDlpResponse)
+@router.post("/update-ytdlp", response_model=UpdateBinaryResponse)
 async def update_ytdlp():
     """Updates the yt-dlp binary, provided no yt-dlp tasks are running."""
     for uid, data in tasks.items():
@@ -25,10 +25,24 @@ async def update_ytdlp():
                 status_code=409, 
                 detail=f"Cannot update yt-dlp: task '{uid}' is still running."
             )
-
     try:
         get_ytdlp()
         return {"status": "success", "message": "yt-dlp updated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
+
+@router.post("/update-ytarchive", response_model=UpdateBinaryResponse)
+async def update_ytdlp():
+    """Updates the ytarchive binary, provided no ytarchive tasks are running."""
+    for uid, data in tasks.items():
+        if data["binary"] == "ytarchive" and not data["completed"]:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"Cannot update ytarchive: task '{uid}' is still running."
+            )
+    try:
+        get_ytarchive()
+        return {"status": "success", "message": "ytarchive updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 

@@ -46,7 +46,7 @@ class StatusDeleteRequest(BaseModel):
     """Request body for deleting a task from the status list."""
     id: str = Field(..., description="The unique ID of the task to delete.")
 
-class UpdateYtDlpResponse(BaseModel):
+class UpdateBinaryResponse(BaseModel):
     """Response structure for the yt-dlp update endpoint."""
     status: str
     message: str

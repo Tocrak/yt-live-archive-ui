@@ -51,10 +51,9 @@ class WebUIController {
 
     constructor() {
         this.cacheDOMElements([
-            "startBtn", "updateYtdlpBtn", "youtubeID", "notice",
-            "callbackRow", "callbackList", "taskList", "customParams",
-            "mkv", "quality", "binary",
-            "parametersToggle", "parametersContent",
+            "startBtn", "updateYtarchiveBtn", "updateYtdlpBtn", "youtubeID", "notice",
+            "callbackRow", "callbackList", "taskList", "customParams", "mkv", "quality", 
+            "binary", "parametersToggle", "parametersContent",
         ]);
 
         this.removeTaskHandler = this.removeTaskHandler.bind(this);
@@ -94,9 +93,14 @@ class WebUIController {
             startBtn.onclick = () => this.startDownload();
         }
 
-        const updateBtn = this.getElement("updateYtdlpBtn");
-        if (updateBtn) {
-            updateBtn.onclick = () => this.updateYtdlp();
+        const updateYtarchiveBtn = this.getElement("updateYtarchiveBtn");
+        if (updateYtarchiveBtn) {
+            updateYtarchiveBtn.onclick = () => this.updateYtarchive();
+        }
+
+        const updateYtdlpBtn = this.getElement("updateYtdlpBtn");
+        if (updateYtdlpBtn) {
+            updateYtdlpBtn.onclick = () => this.updateYtdlp();
         }
 
         const youtubeIDInput = this.getElement("youtubeID");
@@ -444,6 +448,27 @@ class WebUIController {
             }
         } catch (error) {
             console.error("Error updating yt-dlp:", error);
+            this.notify("Failed to connect to the server for update.", 'error');
+        }
+
+        this.loadStatus();
+    }
+
+    async updateYtarchive() {
+        this.notify("Starting ytarchive update...", 'warning');
+
+        try {
+            const resp = await fetch("/update-ytarchive", { method: "POST" });
+            const data = await resp.json();
+
+            if (resp.ok) {
+                this.notify(data.message);
+            } else {
+                const errorMessage = data.detail || "An unknown error occurred.";
+                this.notify(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error("Error updating ytarchive:", error);
             this.notify("Failed to connect to the server for update.", 'error');
         }
 
