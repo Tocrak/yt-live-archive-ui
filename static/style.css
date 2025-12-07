@@ -295,6 +295,10 @@ button:hover {
     text-align: center;
 }
 
+#updateControlsContainer.collapsed {
+    display: none;
+}
+
 .button-group {
     display: flex;
     align-items: center;
@@ -331,19 +335,20 @@ select[disabled] {
         gap: 10px;
     }
 
-    .update-controls-wrapper {
+    .button-group > button:first-child {
+        width: 100%;
+    }
+
+    #updateControlsContainer {
         margin-left: 0;
-        align-items: center; 
-        flex-direction: row;
+        flex-direction: row; 
+        align-items: center;
+        width: 100%;
         padding-right: 0;
     }
     
     .update-button-container {
         width: auto; 
-        flex: 1;
-    }
-
-    .button-group > button:first-child {
-        width: 100%;
+        flex: 1; 
     }
 }

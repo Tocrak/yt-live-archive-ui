@@ -53,7 +53,8 @@ class WebUIController {
         this.cacheDOMElements([
             "startBtn", "updateYtarchiveBtn", "updateYtdlpBtn", "youtubeID", "notice",
             "callbackRow", "callbackList", "taskList", "customParams", "mkv", "quality", 
-            "binary", "parametersToggle", "parametersContent",
+            "binary", "parametersToggle", "parametersContent", "buttonGroup", 
+            "updateControlsContainer",
         ]);
 
         this.removeTaskHandler = this.removeTaskHandler.bind(this);
@@ -312,6 +313,7 @@ class WebUIController {
     toggleParameters(newState) {
         const toggle = this.getElement("parametersToggle");
         const content = this.getElement("parametersContent");
+        const updateContainer = this.getElement("updateControlsContainer");
 
         if (!toggle || !content) {
             return;
@@ -323,9 +325,11 @@ class WebUIController {
         if (finalState) {
             toggle.classList.add("expanded");
             content.classList.add("expanded");
+            updateContainer.classList.remove("collapsed");
         } else {
             toggle.classList.remove("expanded");
             content.classList.remove("expanded");
+            updateContainer.classList.add("collapsed");
         }
 
         localStorage.setItem("parametersExpanded", finalState.toString());
