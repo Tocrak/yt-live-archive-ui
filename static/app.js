@@ -13,15 +13,41 @@ const TASK_STATUS_MAP = {
 const parameterConfig = [
     { storageKey: "binary", elementId: "binary", defaultValue: "ytdlp", type: "value" },
     { storageKey: "downloadQuality", elementId: "quality", defaultValue: "best", type: "value" },
-    { storageKey: "downloadThumbnail", elementId: "thumbnail", defaultValue: true, type: "checked" },
-    { storageKey: "downloadWait", elementId: "wait", defaultValue: true, type: "checked" },
-    { storageKey: "downloadMkv", elementId: "mkv", defaultValue: true, type: "checked" },
-    { storageKey: "youtubeCookies", elementId: "youtubeCookies", defaultValue: false, type: "checked" },
-    { storageKey: "downloadOutput", elementId: "output", defaultValue: "%(channel)s - %(title)s", type: "value" },
-    { storageKey: "downloadRetryStream", elementId: "retryStream", defaultValue: "60", type: "value" },
-    { storageKey: "downloadThreads", elementId: "threads", defaultValue: "1", type: "value" },
+    { storageKey: "embed_thumbnail", elementId: "thumbnail", defaultValue: true, type: "checked" },
+    { storageKey: "wait_for_live", elementId: "wait", defaultValue: true, type: "checked" },
+    { storageKey: "force_mkv", elementId: "mkv", defaultValue: true, type: "checked", isOptional: true },
+    { storageKey: "use_cookies", elementId: "youtubeCookies", defaultValue: false, type: "checked" },
+    { storageKey: "output_filename", elementId: "output", defaultValue: "%(channel)s - %(title)s", type: "value" },
+    { storageKey: "retry_stream", elementId: "retryStream", defaultValue: "60", type: "value" },
+    { storageKey: "threads", elementId: "threads", defaultValue: "1", type: "value" },
     { storageKey: "refreshInterval", elementId: "refreshInterval", defaultValue: "2", type: "value", isOptional: true },
+    { storageKey: "customParams", elementId: "customParams", defaultValue: "", type: "value", isOptional: true },
 ];
+const FLAG_TO_CANONICAL_MAP = {
+    '--output': 'output_filename',
+    '-o': 'output_filename',
+    // yt-dlp flags
+    '--wait-for-video': 'retry_stream',
+    '--concurrent-fragments': 'threads',
+    '--live-from-start': 'wait_for_live',
+    '--embed-thumbnail': 'embed_thumbnail',
+    // ytarchive flags
+    '--retry-stream': 'retry_stream',
+    '--threads': 'threads',
+    '--wait': 'wait_for_live',
+    '--thumbnail': 'embed_thumbnail',
+};
+const YTDLP_MKV_HIERARCHY = [
+    '--recode-video', 
+    '--remux-video', 
+    '--merge-output-format'
+];
+const FORCE_MKV_OVERRIDE_MAP = {
+    '--merge-output-format': true,
+    '--remux-video': true,
+    '--recode-video': true,
+    '--mkv': true,
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDefaults();
@@ -98,6 +124,11 @@ function setupListeners() {
                     startStatusInterval(); 
                 }
             });
+        } else if (config.elementId === "customParams") {
+            element.addEventListener("input", function() {
+                saveParameters();
+                updateUiFromCustomParams();
+            });
         } else {
             element.addEventListener("change", saveParameters);
         }
@@ -106,6 +137,7 @@ function setupListeners() {
 
 function loadDefaults() {
     loadParameters();
+    updateUiFromCustomParams();
     setupListeners();
 }
 
@@ -156,6 +188,108 @@ function notify(msg, type = 'success') {
     }, 3000);
 }
 
+function parseCustomParams(paramString) {
+    const params = {};
+    if (!paramString) return params;
+
+    const parts = paramString.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+    
+    for (let i = 0; i < parts.length; i++) {
+        let part = parts[i].trim().replace(/^['"]|['"]$/g, '');
+        
+        if (part.startsWith('-')) {
+            const currentKey = part;
+            const nextPart = parts[i + 1] ? parts[i + 1].trim().replace(/^['"]|['"]$/g, '') : null;
+            
+            if (nextPart && !nextPart.startsWith('-')) {
+                params[currentKey] = nextPart;
+                i++;
+            } else {
+                params[currentKey] = true;
+            }
+        } else {
+            console.warn(`Ignoring unassociated value: ${part}`);
+        }
+    }
+    return params;
+}
+
+function updateUiFromCustomParams() {
+    const customParamsString = document.getElementById("customParams").value.trim();
+    const customParams = parseCustomParams(customParamsString);
+    const forceMkvElement = document.getElementById("mkv");
+    let disableForceMkv = false; 
+    let setForceMkvChecked = false;
+
+    for (const flag of YTDLP_MKV_HIERARCHY) {
+        const value = customParams[flag];
+        if (value !== undefined) {
+            disableForceMkv = true;
+            if (String(value).toLowerCase() === 'mkv') {
+                setForceMkvChecked = true;
+                break;
+            } else {
+                setForceMkvChecked = false;
+                break;
+            }
+        }
+    }
+    
+    if (!disableForceMkv && customParams['--mkv'] === true) {
+        disableForceMkv = true;
+        setForceMkvChecked = true;
+    }
+    
+    parameterConfig.forEach(config => {
+        const element = document.getElementById(config.elementId);
+        if (!element || config.elementId === "customParams") {
+            return;
+        }
+
+        element.disabled = false;
+        element.classList.remove('overridden');
+        delete element.dataset.overridden;
+        const storedValue = localStorage.getItem(config.storageKey);
+        
+        if (config.type === "checked") {
+            element.checked = storedValue !== null ? storedValue === "true" : config.defaultValue;
+        } else if (config.type === "value") {
+            const isStoredValueValid = storedValue && storedValue.trim() !== "";
+            element.value = isStoredValueValid ? storedValue.trim() : config.defaultValue;
+        }
+    });
+
+    if (forceMkvElement && disableForceMkv) {
+        forceMkvElement.checked = setForceMkvChecked; 
+        forceMkvElement.disabled = true;
+        forceMkvElement.classList.add('overridden');
+        forceMkvElement.dataset.overridden = 'true';
+    }
+
+    for (const [fullFlag, value] of Object.entries(customParams)) {
+        const canonicalKey = FLAG_TO_CANONICAL_MAP[fullFlag];
+        
+        if (canonicalKey) {
+            const config = parameterConfig.find(c => c.storageKey === canonicalKey);
+            const element = document.getElementById(config.elementId);
+
+            if (element) {
+                if (element.id === "mkv") continue; 
+
+                if (config.type === "checked") {
+                    element.checked = (value === true) || (String(value).toLowerCase() === 'true') || (String(value) === '1');
+                } else if (config.type === "value") {
+                    element.value = String(value);
+                }
+                
+                element.dataset.overridden = 'true';
+                element.disabled = true;
+                element.classList.add('overridden');
+            }
+        }
+    }
+}
+
 async function loadCallbacks() {
     const row = document.getElementById("callbackRow");
     const list = document.getElementById("callbackList");
@@ -182,6 +316,11 @@ async function startDownload() {
         return;
     }
     youtubeIDInput.value = "";
+
+    updateUiFromCustomParams();
+    saveParameters();
+
+    const forceMkvIsOverridden = document.getElementById("mkv") && document.getElementById("mkv").dataset.overridden === 'true';
     const body = {
         youtubeID,
         quality: document.getElementById("quality").value,
@@ -189,26 +328,40 @@ async function startDownload() {
         params: {},
         callbacks: []
     };
-    const threads = document.getElementById("threads").value.trim();
-    if (threads) body.params["threads"] = threads;
-    
-    const retry = document.getElementById("retryStream").value.trim();
-    if (retry) body.params["retry_stream"] = retry; 
-    
-    if (document.getElementById("thumbnail").checked)
-        body.params["embed_thumbnail"] = true;
-    
-    if (document.getElementById("mkv").checked)
-        body.params["force_mkv"] = true;
-    
-    if (document.getElementById("wait").checked)
-        body.params["wait_for_live"] = true;
-    
-    if (document.getElementById("youtubeCookies").checked)
-        body.params["use_cookies"] = true;
-    
-    const output = document.getElementById("output").value.trim();
-    if (output) body.params["output_filename"] = output;
+
+    parameterConfig.forEach(config => {
+        if (["binary", "downloadQuality", "refreshInterval"].includes(config.storageKey)) {
+            return;
+        }
+        if (config.storageKey === "force_mkv" && forceMkvIsOverridden) {
+            return;
+        }
+        const element = document.getElementById(config.elementId);
+        if (!element) {
+            return;
+        }
+
+        let value;
+        if (config.type === "value") {
+            value = element.value.trim();
+        } else if (config.type === "checked") {
+            value = element.checked;
+        }
+
+        if (value || (config.type === "checked" && value === true)) {
+            body.params[config.storageKey] = value;
+        }
+    });
+
+    const customParamsString = document.getElementById("customParams").value.trim();
+    const customParams = parseCustomParams(customParamsString);
+
+    for (const [fullFlag, value] of Object.entries(customParams)) {
+        if (FLAG_TO_CANONICAL_MAP[fullFlag]) {
+            continue;
+        }
+        body.params[fullFlag] = value;
+    }
 
     document.querySelectorAll("#callbackList input[type=checkbox]:checked")
         .forEach(cb => body.callbacks.push(cb.value));

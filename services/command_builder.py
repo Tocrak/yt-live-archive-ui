@@ -37,6 +37,9 @@ def build_cmd_from_map(url: str, quality: str, params: dict, mapping: dict, bina
                     cmd += f" {flag} {value}"
     
     for k, v in params.items():
+        if k == "customParams":
+            continue
+        
         logger.warning(f"Unmapped parameter passed: {k}={v}. Attempting generic addition.")
         
         if isinstance(v, bool) and v:
