@@ -289,14 +289,14 @@ class WebUIController {
                 const value = customParams[flag];
                 if (value !== undefined) {
                     disableForceMkv = true;
-                    setForceMkvChecked = (String(value).toLowerCase() === 'mkv');
+                    setForceMkvChecked = (String(value).toLowerCase() === 'mkv'); 
                     break;
                 }
             }
         } else if (binary === "ytarchive") {
             if (customParams['--mkv'] !== undefined) {
                 disableForceMkv = true;
-                setForceMkvChecked = (customParams['--mkv'] === true);
+                setForceMkvChecked = (customParams['--mkv'] === true) || (String(customParams['--mkv']).toLowerCase() === 'mkv');
             }
         }
 
@@ -419,10 +419,15 @@ class WebUIController {
         const customParamsString = this.getElement("customParams").value.trim();
         const customParams = this.parseCustomParams(customParamsString);
         const activeFlagMap = body.binary === "ytarchive" ? this.YTARCHIVE_FLAG_MAP : this.YTDLP_FLAG_MAP;
-        const mkvSkipFlags = body.binary === "ytdlp" ? this.MKV_HIERARCHY : ['--mkv'];
+        const customMkvKeys = body.binary === "ytdlp" ? this.MKV_HIERARCHY : ['--mkv'];
+        const customMergeFlagIsPresent = Object.keys(customParams).some(flag => customMkvKeys.includes(flag));
 
         this.PARAMETER_CONFIG.forEach(config => {
             if (["binary", "downloadQuality", "refreshInterval", "customParams"].includes(config.key)) {
+                return;
+            }
+
+            if (config.key === 'force_mkv' && customMergeFlagIsPresent) {
                 return;
             }
 
@@ -446,12 +451,12 @@ class WebUIController {
         for (const [fullFlag, value] of Object.entries(customParams)) {
             const canonicalKey = activeFlagMap[fullFlag];
             
-            if (mkvSkipFlags.includes(fullFlag) && (body.binary === "ytdlp" || fullFlag === '--mkv')) {
+            if (!customMergeFlagIsPresent && customMkvKeys.includes(fullFlag)) {
                 continue;
             }
 
             const key = canonicalKey || fullFlag;
-            params[key] = value; 
+            params[key] = value;
         }
 
         body.params = params;
