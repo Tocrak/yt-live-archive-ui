@@ -1,5 +1,7 @@
 class WebUIController {
 
+    static CUSTOM_PARAMS_REGEX = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
+
     TASK_STATUS_MAP = {
         1: "Done",
         2: "Error",
@@ -49,6 +51,7 @@ class WebUIController {
     notifyTimeoutId = null;
     collapsedLogs = new Set(JSON.parse(localStorage.getItem('collapsedLogs') || '[]'));
     taskElements = new Map();
+    customParamsCache = {};
     elements = {};
 
 
@@ -150,6 +153,11 @@ class WebUIController {
                     this.saveParameters();
                     this.updateUiFromCustomParams();
                 });
+            } else if (config.elementId === "binary") {
+                element.addEventListener("change", () => {
+                    this.saveParameters();
+                    this.updateUiFromCustomParams();
+                });
             } else {
                 element.addEventListener("change", () => this.saveParameters());
             }
@@ -218,12 +226,19 @@ class WebUIController {
     }
 
     parseCustomParams(paramString) {
+        paramString = paramString ? paramString.trim() : "";
+        
+        if (this.customParamsCache.hasOwnProperty(paramString)) {
+            return this.customParamsCache[paramString];
+        }
+
         const params = {};
         if (!paramString) {
+            this.customParamsCache[paramString] = params;
             return params;
         }
 
-        const parts = paramString.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+        const parts = paramString.match(WebUIController.CUSTOM_PARAMS_REGEX) || [];
 
         for (let i = 0; i < parts.length; i++) {
             let part = parts[i].trim().replace(/^['"]|['"]$/g, '');
@@ -242,6 +257,8 @@ class WebUIController {
                 console.warn(`Ignoring unassociated value: ${part}`);
             }
         }
+        
+        this.customParamsCache[paramString] = params;
         return params;
     }
 
@@ -297,6 +314,11 @@ class WebUIController {
             if (canonicalKey) {
                 const config = this.PARAMETER_CONFIG.find(c => c.key === canonicalKey);
                 const element = this.getElement(config.elementId);
+                
+                if (!config) {
+                     console.warn(`Configuration for canonical key '${canonicalKey}' not found.`);
+                     continue; 
+                }
 
                 if (element && element.id !== "mkv") {
                     if (config.type === "checked") {
