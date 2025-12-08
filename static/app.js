@@ -23,16 +23,19 @@ class WebUIController {
         { key: "customParams", elementId: "customParams", defaultValue: "", type: "value", isOptional: true },
     ];
 
-    FLAG_TO_CANONICAL_MAP = {
+    YTDLP_FLAG_MAP = {
         '--output': 'output_filename',
         '-o': 'output_filename',
-        // yt-dlp
         '--wait-for-video': 'retry_stream',
         '--concurrent-fragments': 'threads',
         '--live-from-start': 'wait_for_live',
         '--embed-metadata': 'embed_metadata',
         '--embed-thumbnail': 'embed_thumbnail',
-        // ytarchive
+    };
+
+    YTARCHIVE_FLAG_MAP = {
+        '--output': 'output_filename',
+        '-o': 'output_filename',
         '--retry-stream': 'retry_stream',
         '--threads': 'threads',
         '--wait': 'wait_for_live',
@@ -52,8 +55,8 @@ class WebUIController {
     constructor() {
         this.cacheDOMElements([
             "startBtn", "updateYtarchiveBtn", "updateYtdlpBtn", "youtubeID", "notice",
-            "callbackRow", "callbackList", "taskList", "customParams", "mkv", "quality", 
-            "binary", "parametersToggle", "parametersContent", "buttonGroup", 
+            "callbackRow", "callbackList", "taskList", "customParams", "mkv", "quality",
+            "binary", "parametersToggle", "parametersContent", "buttonGroup",
             "updateControlsContainer",
         ]);
 
@@ -78,9 +81,9 @@ class WebUIController {
     }
 
     init() {
-        this.loadParameters(); 
+        this.loadParameters();
         this.loadParametersCollapseState();
-        this.updateUiFromCustomParams(); 
+        this.updateUiFromCustomParams();
         this.setupListeners();
         this.loadCallbacks();
         this.loadStatus();
@@ -114,7 +117,7 @@ class WebUIController {
             });
         }
 
-        const paramsToggle = this.getElement("parametersToggle"); 
+        const paramsToggle = this.getElement("parametersToggle");
         if (paramsToggle) {
             paramsToggle.addEventListener("click", () => this.toggleParameters());
         }
@@ -157,7 +160,7 @@ class WebUIController {
         const customParamsElement = this.getElement("customParams");
         const customParamsStoredValue = localStorage.getItem("customParams") || "";
         if (customParamsElement) {
-             customParamsElement.value = customParamsStoredValue;
+            customParamsElement.value = customParamsStoredValue;
         }
 
         this.PARAMETER_CONFIG.forEach(config => {
@@ -174,7 +177,7 @@ class WebUIController {
                 console.warn(`Element with ID '${config.elementId}' not found.`);
                 return;
             }
-            
+
             this.loadParameterValue(config, element);
         });
     }
@@ -202,14 +205,14 @@ class WebUIController {
 
             const isOverridden = element.dataset.overridden === 'true';
             if (config.key === "customParams" || !isOverridden) {
-                 let valueToSave;
-                 if (config.type === "checked") {
-                     valueToSave = element.checked.toString();
-                 } else if (config.type === "value") {
-                     valueToSave = element.value.trim();
-                 }
+                let valueToSave;
+                if (config.type === "checked") {
+                    valueToSave = element.checked.toString();
+                } else if (config.type === "value") {
+                    valueToSave = element.value.trim();
+                }
 
-                 localStorage.setItem(config.key, valueToSave);
+                localStorage.setItem(config.key, valueToSave);
             }
         });
     }
@@ -246,34 +249,39 @@ class WebUIController {
         const customParamsString = this.getElement("customParams").value.trim();
         const customParams = this.parseCustomParams(customParamsString);
         const forceMkvElement = this.getElement("mkv");
-        
+        const binary = this.getElement("binary").value;
+        const activeFlagMap = binary === "ytarchive" ? this.YTARCHIVE_FLAG_MAP : this.YTDLP_FLAG_MAP;
+
         this.PARAMETER_CONFIG.forEach(config => {
             const element = this.getElement(config.elementId);
             if (!element || config.elementId === "customParams") {
                 return;
             }
-            
+
             element.disabled = false;
             element.classList.remove('overridden');
             delete element.dataset.overridden;
-            
+
             this.loadParameterValue(config, element);
         });
 
         let disableForceMkv = false;
         let setForceMkvChecked = false;
 
-        for (const flag of this.MKV_HIERARCHY) {
-            const value = customParams[flag];
-            if (value !== undefined) {
-                disableForceMkv = true;
-                setForceMkvChecked = (String(value).toLowerCase() === 'mkv');
-                break;
+        if (binary === "ytdlp") {
+            for (const flag of this.MKV_HIERARCHY) {
+                const value = customParams[flag];
+                if (value !== undefined) {
+                    disableForceMkv = true;
+                    setForceMkvChecked = (String(value).toLowerCase() === 'mkv');
+                    break;
+                }
             }
-        }
-        if (!disableForceMkv && customParams['--mkv'] === true) {
-            disableForceMkv = true;
-            setForceMkvChecked = true;
+        } else if (binary === "ytarchive") {
+            if (customParams['--mkv'] !== undefined) {
+                disableForceMkv = true;
+                setForceMkvChecked = (customParams['--mkv'] === true);
+            }
         }
 
         if (forceMkvElement && disableForceMkv) {
@@ -284,7 +292,7 @@ class WebUIController {
         }
 
         for (const [fullFlag, value] of Object.entries(customParams)) {
-            const canonicalKey = this.FLAG_TO_CANONICAL_MAP[fullFlag];
+            const canonicalKey = activeFlagMap[fullFlag];
 
             if (canonicalKey) {
                 const config = this.PARAMETER_CONFIG.find(c => c.key === canonicalKey);
@@ -292,7 +300,9 @@ class WebUIController {
 
                 if (element && element.id !== "mkv") {
                     if (config.type === "checked") {
-                        element.checked = (value === true) || (String(value).toLowerCase() === 'true') || (String(value) === '1');
+                        element.checked = (value === true)
+                            || (String(value).toLowerCase() === 'true')
+                            || (String(value) === '1');
                     } else if (config.type === "value") {
                         element.value = String(value);
                     }
@@ -306,8 +316,8 @@ class WebUIController {
     }
 
     loadParametersCollapseState() {
-        const isExpanded = localStorage.getItem("parametersExpanded") !== "false"; 
-        this.toggleParameters(isExpanded); 
+        const isExpanded = localStorage.getItem("parametersExpanded") !== "false";
+        this.toggleParameters(isExpanded);
     }
 
     toggleParameters(newState) {
@@ -387,7 +397,8 @@ class WebUIController {
         const params = {};
         const customParamsString = this.getElement("customParams").value.trim();
         const customParams = this.parseCustomParams(customParamsString);
-        
+        const activeFlagMap = body.binary === "ytarchive" ? this.YTARCHIVE_FLAG_MAP : this.YTDLP_FLAG_MAP;
+
         this.PARAMETER_CONFIG.forEach(config => {
             if (["binary", "downloadQuality", "refreshInterval", "customParams"].includes(config.key)) {
                 return;
@@ -397,7 +408,7 @@ class WebUIController {
             if (!element) {
                 return;
             }
-            
+
             let value;
             if (config.type === "value") {
                 value = element.value.trim();
@@ -411,10 +422,10 @@ class WebUIController {
         });
 
         for (const [fullFlag, value] of Object.entries(customParams)) {
-            const canonicalKey = this.FLAG_TO_CANONICAL_MAP[fullFlag];
-            
+            const canonicalKey = activeFlagMap[fullFlag];
+
             if (!canonicalKey) {
-                 params[fullFlag] = value;
+                params[fullFlag] = value;
             }
         }
 
@@ -554,7 +565,7 @@ class WebUIController {
         taskElement.remove();
         this.taskElements.delete(uid);
         this.collapsedLogs.delete(`log-${uid}`);
-        
+
         if (taskElement.dataset.id) {
             localStorage.setItem('collapsedLogs', JSON.stringify(Array.from(this.collapsedLogs)));
         }
@@ -582,7 +593,7 @@ class WebUIController {
             const statusText = this.TASK_STATUS_MAP[rec.status] || rec.status;
             const outputText = (rec.output || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const currentLogText = `<br>${outputText.replace(/\n/g, "<br>")}`;
-            
+
             let isCollapsed = this.collapsedLogs.has(logId);
             let taskDiv = this.taskElements.get(uid);
 
