@@ -19,7 +19,7 @@ async def record(body: RecordRequest) -> Dict[str, str]:
     params = body.params
     binary = body.binary
     callback_ids = body.callbacks or []
-    uid = get_id(youtube_id)
+    uid = youtube_id # TODO: support multiple concurrent tasks for same video
 
     if uid in tasks:
         raise HTTPException(
