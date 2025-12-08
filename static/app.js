@@ -91,7 +91,6 @@ class WebUIController {
         this.loadCallbacks();
         this.loadStatus();
         this.startStatusInterval();
-        window.webUIController = this;
     }
 
     setupListeners() {
@@ -177,12 +176,11 @@ class WebUIController {
             }
 
             const element = this.getElement(config.elementId);
-            if (!element && config.isOptional) {
-                return;
-            }
-
+            
             if (!element) {
-                console.warn(`Element with ID '${config.elementId}' not found.`);
+                if (!config.isOptional) {
+                    console.warn(`Element with ID '${config.elementId}' not found.`);
+                }
                 return;
             }
 
@@ -241,14 +239,15 @@ class WebUIController {
         const parts = paramString.match(WebUIController.CUSTOM_PARAMS_REGEX) || [];
 
         for (let i = 0; i < parts.length; i++) {
-            let part = parts[i].trim().replace(/^['"]|['"]$/g, '');
+            let part = parts[i].trim();
+            let nextPart = null;
 
             if (part.startsWith('-')) {
                 const currentKey = part;
-                const nextPart = parts[i + 1] ? parts[i + 1].trim().replace(/^['"]|['"]$/g, '') : null;
-
-                if (nextPart && !nextPart.startsWith('-')) {
-                    params[currentKey] = nextPart;
+                
+                if (parts[i + 1] && !parts[i + 1].trim().startsWith('-')) {
+                    nextPart = parts[i + 1].trim();
+                    params[currentKey] = nextPart.replace(/^['"]|['"]$/g, '');
                     i++;
                 } else {
                     params[currentKey] = true;
@@ -316,8 +315,8 @@ class WebUIController {
                 const element = this.getElement(config.elementId);
                 
                 if (!config) {
-                     console.warn(`Configuration for canonical key '${canonicalKey}' not found.`);
-                     continue; 
+                    console.warn(`Configuration for canonical key '${canonicalKey}' not found.`);
+                    continue; 
                 }
 
                 if (element && element.id !== "mkv") {
@@ -420,6 +419,7 @@ class WebUIController {
         const customParamsString = this.getElement("customParams").value.trim();
         const customParams = this.parseCustomParams(customParamsString);
         const activeFlagMap = body.binary === "ytarchive" ? this.YTARCHIVE_FLAG_MAP : this.YTDLP_FLAG_MAP;
+        const mkvSkipFlags = body.binary === "ytdlp" ? this.MKV_HIERARCHY : ['--mkv'];
 
         this.PARAMETER_CONFIG.forEach(config => {
             if (["binary", "downloadQuality", "refreshInterval", "customParams"].includes(config.key)) {
@@ -445,10 +445,13 @@ class WebUIController {
 
         for (const [fullFlag, value] of Object.entries(customParams)) {
             const canonicalKey = activeFlagMap[fullFlag];
-
-            if (!canonicalKey) {
-                params[fullFlag] = value;
+            
+            if (mkvSkipFlags.includes(fullFlag) && (body.binary === "ytdlp" || fullFlag === '--mkv')) {
+                continue;
             }
+
+            const key = canonicalKey || fullFlag;
+            params[key] = value; 
         }
 
         body.params = params;
@@ -522,6 +525,7 @@ class WebUIController {
         try {
             const resp = await fetch("/callbacks");
             if (!resp.ok) {
+                console.error(`Error loading callbacks: Server returned status ${resp.status}`);
                 return;
             }
 
@@ -624,9 +628,12 @@ class WebUIController {
                 taskDiv.className = "task";
                 taskDiv.dataset.id = uid;
 
+                const idDisplay = document.createElement("strong");
+                idDisplay.textContent = uid;
+                idDisplay.dataset.idDisplay = true;
+
                 taskDiv.innerHTML = `
                     <div class="task-header">
-                        <strong data-id-display>${uid}</strong>
                         <span class="task-status ${statusText.toLowerCase()}">${statusText}</span>
                         <button class="remove-btn" data-id="${uid}">Remove</button>
                     </div>
@@ -635,6 +642,11 @@ class WebUIController {
                     </div>
                     <div id="${logId}" class="log ${isCollapsed ? '' : 'expanded'}" data-auto-scroll="${!isCollapsed}">${currentLogText}</div>
                 `;
+                
+                const header = taskDiv.querySelector('.task-header');
+                if (header) {
+                    header.prepend(idDisplay);
+                }
 
                 this.taskElements.set(uid, taskDiv);
                 fragment.appendChild(taskDiv);
