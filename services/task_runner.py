@@ -14,6 +14,8 @@ try:
 except ImportError:
     callbacks = None
 
+DOWNLOAD_GROUP_RE = re.compile(r"^(?P<prefix>\d+:\s+)?\[download\]")
+
 def get_id(base: str) -> str:
     """Generates a unique ID based on a base string (e.g., youtubeID)."""
     if base not in tasks:
@@ -45,22 +47,30 @@ async def _process_stream_line(
     """Handles parsing and logging for a single line from stdout/stderr."""
     if not data.get("started_log", False):
         if data.get("status") == TaskStatus.PENDING.value:
-             data["status"] = TaskStatus.ACTIVE.value
+            data["status"] = TaskStatus.ACTIVE.value
         data["started_log"] = True
 
     logger.debug(f"[{uid}] {stream_name}: {line}") 
     prev = data["progress_log"].splitlines() if data["progress_log"] else []
+    
     is_progress = progress_re.search(line)
     
     if is_progress:
         data["active"] = True
-        if prev and progress_re.search(prev[-1]):
-            prev[-1] = line
-        else:
+        
+        group_match = DOWNLOAD_GROUP_RE.search(line)
+        prefix_key = group_match.group('prefix') if group_match and group_match.group('prefix') else ""
+        
+        found_match = False
+        for i in range(len(prev) - 1, -1, -1):
+            if prev[i].startswith(prefix_key) and progress_re.search(prev[i]):
+                prev[i] = line
+                found_match = True
+                break
+        if not found_match:
             prev.append(line)
     else:
         prev.append(line)
-        
     data["progress_log"] = "\n".join(prev)
 
 async def run_download(uid: str):
